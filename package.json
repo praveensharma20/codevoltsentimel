@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@auth0/auth0-react": "^2.22.1",
+    "lucide-react": "^1.27.0",
+    "recharts": "^3.10.1"
+  }
+}
