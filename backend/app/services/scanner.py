@@ -1,6 +1,7 @@
 import json
 import shutil
 import subprocess
+from json import JSONDecodeError
 from pathlib import Path
 from uuid import uuid4
 
@@ -35,7 +36,10 @@ class ScanService:
         settings = get_settings()
         command = ["semgrep", "--json", "--config", settings.semgrep_config, str(source_path)]
         completed = subprocess.run(command, capture_output=True, text=True, timeout=settings.scanner_timeout_seconds, check=False)
-        data = json.loads(completed.stdout or "{}")
+        try:
+            data = json.loads(completed.stdout or "{}")
+        except JSONDecodeError as exc:
+            raise RuntimeError("Semgrep returned invalid JSON") from exc
         findings = []
         for item in data.get("results", []):
             extra = item.get("extra", {})
@@ -53,8 +57,14 @@ class ScanService:
         if not shutil.which("bandit"):
             return []
         command = ["bandit", "-r", str(source_path), "-f", "json"]
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=get_settings().scanner_timeout_seconds, check=False)
-        data = json.loads(completed.stdout or "{}")
+        try:
+            completed = subprocess.run(command, capture_output=True, text=True, timeout=get_settings().scanner_timeout_seconds, check=False)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("Bandit scan timed out") from exc
+        try:
+            data = json.loads(completed.stdout or "{}")
+        except JSONDecodeError as exc:
+            raise RuntimeError("Bandit returned invalid JSON") from exc
         return [Finding(
             id=item.get("test_id", uuid4().hex), tool="bandit", category=_category(item.get("test_name", "")),
             file_path=str(Path(item.get("filename", "")).relative_to(source_path)) if str(item.get("filename", "")).startswith(str(source_path)) else item.get("filename", ""),
