@@ -213,26 +213,29 @@ function handleUserLogin(req, res) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#060911] text-white">
-        <h1 className="text-4xl font-bold mb-4">CodeVolt Sentinel</h1>
-        <p className="text-gray-400 mb-8">AI Powered Secure Code Review Platform</p>
-        <div className="flex gap-4">
-          <button
-            onClick={() => loginWithRedirect()}
-            className="bg-cyan-500 hover:bg-cyan-600 px-6 py-3 rounded-lg font-semibold"
-          >
-            Login
+      <div className="min-h-screen flex items-center justify-center bg-[#060911] text-white px-4">
+        <form onSubmit={handleAuthSubmit} className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#0e1422] p-8 shadow-2xl">
+          <div className="text-center mb-7">
+            <h1 className="text-3xl font-black">CodeVolt Sentinel</h1>
+            <p className="text-gray-400 text-sm mt-2">AI-powered secure code review platform</p>
+          </div>
+          <div className="flex gap-2 mb-5">
+            <button type="button" onClick={() => setAuthMode("login")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${authMode === "login" ? "bg-cyan-600" : "bg-gray-900 text-gray-400"}`}>Login</button>
+            <button type="button" onClick={() => setAuthMode("register")} className={`flex-1 rounded-lg py-2 text-xs font-bold ${authMode === "register" ? "bg-indigo-600" : "bg-gray-900 text-gray-400"}`}>Sign Up</button>
+          </div>
+          <label className="block text-xs font-semibold text-gray-300 mb-2">Email</label>
+          <input type="email" required autoComplete="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full mb-4 rounded-lg border border-gray-700 bg-gray-900 px-3 py-3 text-sm outline-none focus:border-cyan-500" placeholder="you@example.com" />
+          <label className="block text-xs font-semibold text-gray-300 mb-2">Password</label>
+          <input type="password" required minLength={12} maxLength={128} autoComplete={authMode === "login" ? "current-password" : "new-password"} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full mb-5 rounded-lg border border-gray-700 bg-gray-900 px-3 py-3 text-sm outline-none focus:border-cyan-500" placeholder="Minimum 12 characters" />
+          <button type="submit" disabled={authLoading} className="w-full rounded-lg bg-cyan-600 hover:bg-cyan-500 py-3 text-sm font-bold disabled:opacity-50">
+            {authLoading ? "Please wait..." : authMode === "login" ? "Login" : "Create Account"}
           </button>
-          <button
-            onClick={() => loginWithRedirect("register")}
-            className="bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold"
-          >
-            Sign Up
-          </button>
-        </div>
+          <p className="text-[11px] text-gray-500 mt-4 text-center">Development accounts are stored in memory.</p>
+        </form>
       </div>
     );
   }
+
 
   return (
     <div className={`min-h-screen flex font-sans transition-colors duration-300 ${darkMode ? 'bg-[#060911] text-gray-100' : 'bg-gray-100 text-gray-900'}`}>
