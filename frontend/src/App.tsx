@@ -40,18 +40,40 @@ interface Vulnerability {
   fixedCode: string;
 }
 
-export default function App() {\n  const [authLoading, setAuthLoading] = useState(true);\n  const [token, setToken] = useState<string | null>(() => localStorage.getItem("sentinel_token"));\n  const [authEmail, setAuthEmail] = useState("");\n  const [authPassword, setAuthPassword] = useState("");\n  const [authMode, setAuthMode] = useState<"login" | "register">("login");\n  const isAuthenticated = Boolean(token);\n  const isLoading = authLoading;\n  const user = token ? { name: authEmail || "Sentinel User", email: authEmail } : null;\n  useEffect(() => { setAuthLoading(false); }, []);\n  const loginWithRedirect = async (mode: "login" | "register" = "login") => {\n    setAuthMode(mode);\n  };\n  const logout = () => { localStorage.removeItem("sentinel_token"); setToken(null); };
-  const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'users' | 'editor'>('editor');
-  const [darkMode, setDarkMode] = useState<boolean>(true);
-  const [copied, setCopied] = useState(false);
-  const {
-    isAuthenticated,
-    isLoading,
-    user,
-    loginWithRedirect,
-    logout,
-  } = useAuth0();
+export default function App() {
+  const [authLoading, setAuthLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("sentinel_token"));
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const isAuthenticated = Boolean(token);
+  const isLoading = authLoading;
+  const user = token ? { name: authEmail || "Sentinel User", email: authEmail } : null;
 
+  useEffect(() => { setAuthLoading(false); }, []);
+
+  const loginWithRedirect = (mode: "login" | "register" = "login") => setAuthMode(mode);
+  const logout = () => { localStorage.removeItem("sentinel_token"); setToken(null); };
+
+  const handleAuthSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setAuthLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api"}/auth/${authMode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail, password: authPassword }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Authentication failed");
+      localStorage.setItem("sentinel_token", data.access_token);
+      setToken(data.access_token);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Authentication failed");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   // Dynamic Live Metrics
   const [metrics, setMetrics] = useState({
