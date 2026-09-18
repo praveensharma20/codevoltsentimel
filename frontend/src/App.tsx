@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { scanCode } from './api/client';
 import ScanSources from './components/ScanSources';
+import ScanHistory from './components/ScanHistory';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { 
   ShieldAlert, 
@@ -483,6 +484,7 @@ function handleUserLogin(req, res) {
           {/* VIEW 2: DASHBOARD METRICS & CHARTS */}
           {activeTab === 'overview' && (
             <div className="flex flex-col gap-6">
+              <ScanHistory token={token!} />
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className={`lg:col-span-8 p-6 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200'}`}>
                   <h3 className="text-sm font-bold mb-4">Finding Count Over Time</h3>
