@@ -1,4 +1,5 @@
 import shutil
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -16,15 +17,17 @@ router = APIRouter(prefix="/scans", tags=["scans"], dependencies=[Depends(curren
 service = ScanService()
 
 
-def _record_event(scan: ScanResult) -> None:
-    EVENTS.append({
-        "id": f"SCAN-{scan.scan_id[:8]}",
-        "time": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
-        "type": "Scan completed" if scan.status == "completed" else "Scan failed",
-        "severity": "HIGH" if scan.findings else "LOW",
-        "message": f"{scan.source}: {len(scan.findings)} finding(s) detected.",
-        "user": user,
-    })
+def _record_event(scan: ScanResult, user: str) -> None:
+    EVENTS.append(
+        {
+            "id": f"SCAN-{scan.scan_id[:8]}",
+            "time": datetime.now(timezone.utc).isoformat(),
+            "type": "Scan completed" if scan.status == "completed" else "Scan failed",
+            "severity": "HIGH" if scan.findings else "LOW",
+            "message": f"{scan.source}: {len(scan.findings)} finding(s) detected.",
+            "user": user,
+        }
+    )
 
 
 @router.post("/upload", response_model=ScanResult)
@@ -33,7 +36,7 @@ async def upload_scan(file: UploadFile = File(...), user: str = Depends(current_
     try:
         result = await run_in_threadpool(service.run_scan, source, file.filename or "upload")
         SCAN_OWNERS[result.scan_id] = user
-        _record_event(result)
+        _record_event(result, user)
         return result
     finally:
         shutil.rmtree(source.parent, ignore_errors=True)
@@ -64,6 +67,12 @@ def github_scan(payload: GitHubScanRequest, user: str = Depends(current_user)) -
         return result
     finally:
         shutil.rmtree(source.parent, ignore_errors=True)
+
+
+@router.get("")
+def list_scans(user: str = Depends(current_user)) -> list[ScanResult]:
+    owned_scan_ids = [scan_id for scan_id, owner in SCAN_OWNERS.items() if owner == user]
+    return [SCANS[scan_id] for scan_id in owned_scan_ids if scan_id in SCANS]
 
 
 @router.get("/{scan_id}", response_model=ScanResult)
