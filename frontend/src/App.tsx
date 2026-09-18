@@ -290,13 +290,9 @@ function handleUserLogin(req, res) {
         {/* User Profile */}
         <div className="border-t border-gray-800/80 pt-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            {user?.picture ? (
-              <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center font-bold text-black text-xs">
-                {user?.name?.charAt(0)}
-              </div>
-            )}
+            <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center font-bold text-black text-xs">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
             <div>
               <p className="text-xs font-bold">{user?.name}</p>
               <p className="text-[10px] text-gray-400">{user?.email}</p>
