@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import current_user
 from app.core.security import create_access_token, hash_password, verify_password
@@ -31,5 +31,5 @@ def login(payload: UserCreate) -> Token:
 
 
 @router.get("/me")
-def me(user: str = current_user) -> dict[str, str]:
+def me(user: str = Depends(current_user)) -> dict[str, str]:
     return {"email": user}
