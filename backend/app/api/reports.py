@@ -13,23 +13,6 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 # 1. Tumhara Original Report Export Endpoint (JSON & CSV Export)
-@router.get("/{scan_id}", dependencies=[Depends(current_user)])
-def export_report(scan_id: str, format: str = "json", user: str = Depends(current_user)) -> Response:
-    result = SCANS.get(scan_id)
-    if not result or SCAN_OWNERS.get(scan_id) != user:
-        raise HTTPException(status_code=404, detail="Scan not found")
-    if format == "json":
-        return Response(result.model_dump_json(indent=2), media_type="application/json")
-    if format == "csv":
-        output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=["id", "tool", "category", "file_path", "line_number", "severity", "confidence", "explanation", "fix_recommendation"])
-        writer.writeheader()
-        for finding in result.findings:
-            writer.writerow(finding.model_dump(exclude={"code"}))
-        return Response(output.getvalue(), media_type="text/csv")
-    raise HTTPException(status_code=400, detail="Unsupported report format")
-
-
 # 2. Dashboard Ke Liye Real-Time Live Stream (SSE Endpoint)
 @router.get("/sse/metrics")
 async def stream_metrics():
@@ -53,4 +36,20 @@ async def stream_metrics():
             yield f"data: {json.dumps(data)}\n\n"
             await asyncio.sleep(4)
 
+
+@router.get("/{scan_id}", dependencies=[Depends(current_user)])
+def export_report(scan_id: str, format: str = "json", user: str = Depends(current_user)) -> Response:
+    result = SCANS.get(scan_id)
+    if not result or SCAN_OWNERS.get(scan_id) != user:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    if format == "json":
+        return Response(result.model_dump_json(indent=2), media_type="application/json")
+    if format == "csv":
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=["id", "tool", "category", "file_path", "line_number", "severity", "confidence", "explanation", "fix_recommendation"])
+        writer.writeheader()
+        for finding in result.findings:
+            writer.writerow(finding.model_dump(exclude={"code"}))
+        return Response(output.getvalue(), media_type="text/csv")
+    raise HTTPException(status_code=400, detail="Unsupported report format")
     return StreamingResponse(event_generator(), media_type="text/event-stream")
