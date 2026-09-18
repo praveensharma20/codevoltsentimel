@@ -157,7 +157,7 @@ function handleUserLogin(req, res) {
         description: finding.explanation,
         recommendation: finding.fix_recommendation,
         vulnerableCode: finding.code ?? "",
-        fixedCode: finding.fix_recommendation,
+        fixedCode: "",
       })));
     } catch (error) {
       alert(error instanceof Error ? error.message : "Security scan failed");
@@ -168,6 +168,10 @@ function handleUserLogin(req, res) {
 
   // Auto Fix Click Functionality
   const applyFix = (vuln: Vulnerability) => {
+    if (!vuln.fixedCode) {
+      navigator.clipboard.writeText(vuln.recommendation);
+      return;
+    }
     setCode(prev => prev.replace(vuln.vulnerableCode, vuln.fixedCode));
     setVulnerabilities(prev => prev.filter(v => v.id !== vuln.id));
     
@@ -448,7 +452,7 @@ function handleUserLogin(req, res) {
                             onClick={() => applyFix(v)} 
                             className="mt-1 w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition active:scale-95"
                           >
-                            <Zap className="w-3.5 h-3.5" /> Auto-Apply Fix
+                            <Zap className="w-3.5 h-3.5" /> {v.fixedCode ? "Apply Fix" : "Copy Fix Guidance"}
                           </button>
                         </div>
                       </div>
