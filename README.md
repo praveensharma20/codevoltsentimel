@@ -1,6 +1,6 @@
-# SecureReview AI
+# CodeVolt Sentinel
 
-SecureReview AI is a production-ready blueprint for an intelligent and secure code review platform. It combines a React dashboard with a FastAPI backend that accepts source uploads or GitHub repository URLs, runs Semgrep and Bandit, normalizes findings, and presents actionable vulnerability reports with filtering and export.
+CodeVolt Sentinel is a development-ready secure code review platform for an intelligent and secure code review platform. It combines a React dashboard with a FastAPI backend that accepts source uploads or GitHub repository URLs, runs Semgrep and Bandit, normalizes findings, and presents actionable vulnerability reports with filtering and export.
 
 ## Capabilities
 
@@ -70,3 +70,9 @@ npm run dev
 - Prefer tuned Semgrep rulesets and confidence scoring to reduce false positives.
 - Set a strong, private `JWT_SECRET` before startup; the backend fails fast if it is missing or left as the placeholder.
 - Require GitHub App installation tokens in production rather than user-submitted personal access tokens.
+
+## Current limitations
+
+- User accounts and scan metadata are stored in memory, so restarting the backend clears them. Use Postgres or another persistent store for production.
+- Scan execution is synchronous from the API perspective; use a worker queue for large repositories or high concurrency.
+- The live metrics endpoint reports aggregate in-process scan metrics; it does not claim to measure host CPU utilization.
