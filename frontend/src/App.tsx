@@ -43,7 +43,7 @@ interface Vulnerability {
 
 export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("sentinel_token"));
+  const [token, setToken] = useState<string | null>(() => sessionStorage.getItem("sentinel_token"));
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -51,10 +51,28 @@ export default function App() {
   const isLoading = authLoading;
   const user = token ? { name: authEmail || "Sentinel User", email: authEmail } : null;
 
-  useEffect(() => { setAuthLoading(false); }, []);
+  useEffect(() => {
+    if (!token) {
+      setAuthLoading(false);
+      return;
+    }
+    fetch(`${import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api"}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Session expired");
+        const data = await response.json();
+        setAuthEmail(data.email);
+      })
+      .catch(() => {
+        sessionStorage.removeItem("sentinel_token");
+        setToken(null);
+      })
+      .finally(() => setAuthLoading(false));
+  }, [token]);
 
   const loginWithRedirect = (mode: "login" | "register" = "login") => setAuthMode(mode);
-  const logout = () => { localStorage.removeItem("sentinel_token"); setToken(null); };
+  const logout = () => { sessionStorage.removeItem("sentinel_token"); setToken(null); };
 
   const handleAuthSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -67,7 +85,7 @@ export default function App() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Authentication failed");
-      localStorage.setItem("sentinel_token", data.access_token);
+      sessionStorage.setItem("sentinel_token", data.access_token);
       setToken(data.access_token);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Authentication failed");
@@ -78,17 +96,13 @@ export default function App() {
 
   // Dynamic Live Metrics
   const [metrics, setMetrics] = useState({
-    threatsBlocked: 378,
-    activeScans: 16,
+    threatsBlocked: 0,
+    activeScans: 0,
     sastHealth: 'Operational',
-    systemLoad: '28%'
+    systemLoad: 'N/A'
   });
 
-  const [logs, setLogs] = useState<LogEntry[]>([
-    { id: 'LOG-6086', time: '3:46:16 AM', type: 'Realtime Alert', severity: 'CRITICAL', message: 'Real-time WebSocket / SSE threat signal processed by Sentinel Engine.' },
-    { id: 'LOG-9332', time: '3:45:55 AM', type: 'Realtime Alert', severity: 'HIGH', message: 'Semgrep static rule triggered on SQLi pattern.' },
-    { id: 'LOG-1375', time: '3:45:46 AM', type: 'Realtime Alert', severity: 'CRITICAL', message: 'Hardcoded secret detected by Bandit parser.' },
-  ]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
   // Code Editor State
   const [code, setCode] = useState<string>(`// Sample Code for Security Evaluation
@@ -96,7 +110,7 @@ function handleUserLogin(req, res) {
     let username = req.body.username;
     let password = req.body.password;
 
-    const SECRET_KEY = "123456789_super_secret";
+    const DEMO_KEY = "demo-placeholder";
     let query = "SELECT * FROM users WHERE user = '" + username + "' AND pass = '" + password + "'";
     
     db.query(query, (err, result) => {
@@ -106,18 +120,7 @@ function handleUserLogin(req, res) {
 }`);
 
   const [isScanning, setIsScanning] = useState(false);
-  const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([
-    {
-      id: 'VULN-01',
-      type: 'SQL Injection (CWE-89)',
-      severity: 'High',
-      line: 8,
-      description: 'Unsanitized user input string formatted directly into SQL query.',
-      recommendation: 'Use prepared statements or parameterized queries to sanitize input.',
-      vulnerableCode: `let query = "SELECT * FROM users WHERE user = '" + username + "' AND pass = '" + password + "'";`,
-      fixedCode: `let query = "SELECT * FROM users WHERE user = ? AND pass = ?";\ndb.query(query, [username, password], callback);`
-    }
-  ]);
+  const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
 
   // Real-time Live SSE Stream Sync
   useEffect(() => {
@@ -516,7 +519,7 @@ function handleUserLogin(req, res) {
             <div className={`p-6 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200'}`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold">Realtime Security Event Logs Table</h3>
-                <span className="text-xs text-cyan-400 font-mono">Live WebSocket Streaming</span>
+                <span className="text-xs text-cyan-400 font-mono">Live SSE Metrics</span>
               </div>
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -565,24 +568,14 @@ function handleUserLogin(req, res) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/40">
-                  <tr>
-                    <td className="py-3 px-4 font-bold">Praveen Kumar</td>
-                    <td className="py-3 px-4 text-cyan-400">Project Admin</td>
-                    <td className="py-3 px-4 text-gray-400">23cse349.praveenkumar@giet.edu</td>
-                    <td className="py-3 px-4"><span className="text-emerald-400 font-bold">Active</span></td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold">Prasanjit Swain</td>
-                    <td className="py-3 px-4 text-cyan-400">Security Developer</td>
-                    <td className="py-3 px-4 text-gray-400">23cse398.prasanjitswain@giet.edu</td>
-                    <td className="py-3 px-4"><span className="text-emerald-400 font-bold">Active</span></td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold">Sneha Kumari</td>
-                    <td className="py-3 px-4 text-cyan-400">Security Analyst</td>
-                    <td className="py-3 px-4 text-gray-400">23cse436.snehakumari@giet.edu</td>
-                    <td className="py-3 px-4"><span className="text-emerald-400 font-bold">Active</span></td>
-                  </tr>
+                  {user && (
+                    <tr>
+                      <td className="py-3 px-4 font-bold">{user.name}</td>
+                      <td className="py-3 px-4 text-cyan-400">Authenticated User</td>
+                      <td className="py-3 px-4 text-gray-400">{user.email}</td>
+                      <td className="py-3 px-4"><span className="text-emerald-400 font-bold">Active</span></td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
