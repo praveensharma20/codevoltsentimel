@@ -103,6 +103,7 @@ export default function App() {
   });
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [metricsHistory, setMetricsHistory] = useState<{ time: string; threatCount: number }[]>([]);
 
   // Code Editor State
   const [code, setCode] = useState<string>(`// Sample Code for Security Evaluation
@@ -129,12 +130,17 @@ function handleUserLogin(req, res) {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        const totalFindings = data.totalFindings ?? 0;
         setMetrics(prev => ({
           ...prev,
-          threatsBlocked: data.totalFindings ?? 0,
+          threatsBlocked: totalFindings,
           activeScans: data.activeScans ?? 0,
           systemLoad: 'N/A'
         }));
+        setMetricsHistory(prev => [
+          ...prev.slice(-11),
+          { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), threatCount: totalFindings }
+        ]);
 
         if (data.log) {
           setLogs(prev => [data.log, ...prev.slice(0, 15)]);
@@ -472,17 +478,10 @@ function handleUserLogin(req, res) {
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className={`lg:col-span-8 p-6 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200'}`}>
-                  <h3 className="text-sm font-bold mb-4">Real-time Vulnerability Detection Stream</h3>
+                  <h3 className="text-sm font-bold mb-4">Finding Count Over Time</h3>
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={[
-                        { time: '12:00', threatCount: 12 },
-                        { time: '12:05', threatCount: 19 },
-                        { time: '12:10', threatCount: 3 },
-                        { time: '12:15', threatCount: 25 },
-                        { time: '12:20', threatCount: 14 },
-                        { time: '12:25', threatCount: 8 }
-                      ]}>
+                      <AreaChart data={metricsHistory}>
                         <XAxis dataKey="time" stroke="#6b7280" fontSize={11} />
                         <YAxis stroke="#6b7280" fontSize={11} />
                         <Tooltip contentStyle={{ backgroundColor: '#090d16', borderColor: '#1f2937' }} />
@@ -493,14 +492,14 @@ function handleUserLogin(req, res) {
                 </div>
 
                 <div className={`lg:col-span-4 p-6 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200'}`}>
-                  <h3 className="text-sm font-bold mb-4">Vulnerabilities by Severity</h3>
+                  <h3 className="text-sm font-bold mb-4">Current Scan Findings by Severity</h3>
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={[
-                        { name: 'Critical', count: 4 },
-                        { name: 'High', count: 12 },
-                        { name: 'Medium', count: 18 },
-                        { name: 'Low', count: 8 },
+                        { name: 'Critical', count: vulnerabilities.filter(v => v.severity === 'High' && /critical/i.test(v.type)).length },
+                        { name: 'High', count: vulnerabilities.filter(v => v.severity === 'High' && !/critical/i.test(v.type)).length },
+                        { name: 'Medium', count: vulnerabilities.filter(v => v.severity === 'Medium').length },
+                        { name: 'Low', count: vulnerabilities.filter(v => v.severity === 'Low').length },
                       ]}>
                         <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
                         <YAxis stroke="#6b7280" fontSize={11} />
