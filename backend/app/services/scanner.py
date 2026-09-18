@@ -18,9 +18,16 @@ class ScanService:
         result = ScanResult(scan_id=scan_id, status="running", source=source_label)
         SCANS[scan_id] = result
         findings: list[Finding] = []
-        findings.extend(self._run_semgrep(source_path))
-        findings.extend(self._run_bandit(source_path))
-        findings.extend(self._fallback_secret_scan(source_path))
+        try:
+            findings.extend(self._run_semgrep(source_path))
+            findings.extend(self._run_bandit(source_path))
+            findings.extend(self._fallback_secret_scan(source_path))
+        except Exception as exc:
+            result.status = "failed"
+            result.error = "Scanner failed safely; check server logs for details."
+            SCANS[scan_id] = result
+            return result
+
         summary: dict[str, int] = {}
         for finding in findings:
             summary[finding.severity.value] = summary.get(finding.severity.value, 0) + 1
