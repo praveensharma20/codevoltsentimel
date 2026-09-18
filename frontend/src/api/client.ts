@@ -33,3 +33,10 @@ export async function downloadReport(token: string, scanId: string, format: 'jso
   anchor.click();
   URL.revokeObjectURL(url);
 }
+
+
+export async function scanCode(token: string, code: string, filename = "snippet.txt"): Promise<ScanResult> {
+  const response = await fetch(`${API_BASE}/scans/code`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ code, filename }) });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<ScanResult>;
+}
