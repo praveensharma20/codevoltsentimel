@@ -51,6 +51,9 @@ export default function App() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const isAuthenticated = Boolean(token);
   const isLoading = authLoading;
+  const [copied, setCopied] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [activeTab, setActiveTab] = useState<"overview" | "logs" | "users" | "editor">("editor");
   const user = token ? { name: authEmail || "Sentinel User", email: authEmail } : null;
 
   useEffect(() => {
