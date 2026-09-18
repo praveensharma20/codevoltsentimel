@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.api.deps import current_user
-from app.models.schemas import GitHubScanRequest, ScanResult
+from app.models.schemas import CodeScanRequest, GitHubScanRequest, ScanResult
 from app.services.github import clone_repository
 from app.services.scanner import ScanService
 from app.services.storage import SCANS
@@ -15,6 +15,22 @@ service = ScanService()
 async def upload_scan(file: UploadFile = File(...)) -> ScanResult:
     source = await save_and_extract(file)
     return service.run_scan(source, file.filename or "upload")
+
+
+@router.post("/code", response_model=ScanResult)
+async def code_scan(payload: CodeScanRequest) -> ScanResult:
+    import shutil
+    from uuid import uuid4
+    from app.core.config import get_settings
+
+    root = get_settings().work_dir / ("snippet-" + uuid4().hex)
+    source = root / "source"
+    source.mkdir(parents=True)
+    try:
+        (source / payload.filename).write_text(payload.code, encoding="utf-8")
+        return service.run_scan(source, payload.filename)
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 @router.post("/github", response_model=ScanResult)
