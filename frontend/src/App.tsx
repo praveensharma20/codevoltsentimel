@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { scanCode } from './api/client';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { 
   ShieldAlert, 
@@ -142,6 +143,28 @@ function handleUserLogin(req, res) {
 
     return () => eventSource.close();
   }, []);
+
+  const handleScanCode = async () => {
+    if (!token || isScanning) return;
+    setIsScanning(true);
+    try {
+      const result = await scanCode(token, code);
+      setVulnerabilities(result.findings.map((finding) => ({
+        id: finding.id,
+        type: finding.category,
+        severity: finding.severity === "critical" || finding.severity === "high" ? "High" : finding.severity === "medium" ? "Medium" : "Low",
+        line: finding.line_number,
+        description: finding.explanation,
+        recommendation: finding.fix_recommendation,
+        vulnerableCode: finding.code ?? "",
+        fixedCode: finding.fix_recommendation,
+      })));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Security scan failed");
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   // Auto Fix Click Functionality
   const applyFix = (vuln: Vulnerability) => {
