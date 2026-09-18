@@ -9,11 +9,11 @@ from fastapi.responses import StreamingResponse
 from app.api.deps import current_user
 from app.services.storage import SCANS
 
-router = APIRouter(prefix="/reports", tags=["reports"], dependencies=[Depends(current_user)])
+router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 # 1. Tumhara Original Report Export Endpoint (JSON & CSV Export)
-@router.get("/{scan_id}")
+@router.get("/{scan_id}", dependencies=[Depends(current_user)])
 def export_report(scan_id: str, format: str = "json") -> Response:
     result = SCANS.get(scan_id)
     if not result:
