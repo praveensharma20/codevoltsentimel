@@ -7,16 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import StreamingResponse
 
 from app.api.deps import current_user
-from app.services.storage import SCANS
+from app.services.storage import SCAN_OWNERS, SCANS
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 # 1. Tumhara Original Report Export Endpoint (JSON & CSV Export)
 @router.get("/{scan_id}", dependencies=[Depends(current_user)])
-def export_report(scan_id: str, format: str = "json") -> Response:
+def export_report(scan_id: str, format: str = "json", user: str = Depends(current_user)) -> Response:
     result = SCANS.get(scan_id)
-    if not result:
+    if not result or SCAN_OWNERS.get(scan_id) != user:
         raise HTTPException(status_code=404, detail="Scan not found")
     if format == "json":
         return Response(result.model_dump_json(indent=2), media_type="application/json")
