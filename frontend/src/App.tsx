@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { useAuth0 } from "@auth0/auth0-react";
 import { 
   ShieldAlert, 
   Code2, 
@@ -41,7 +40,7 @@ interface Vulnerability {
   fixedCode: string;
 }
 
-export default function App() {
+export default function App() {\n  const [authLoading, setAuthLoading] = useState(true);\n  const [token, setToken] = useState<string | null>(() => localStorage.getItem("sentinel_token"));\n  const [authEmail, setAuthEmail] = useState("");\n  const [authPassword, setAuthPassword] = useState("");\n  const [authMode, setAuthMode] = useState<"login" | "register">("login");\n  const isAuthenticated = Boolean(token);\n  const isLoading = authLoading;\n  const user = token ? { name: authEmail || "Sentinel User", email: authEmail } : null;\n  useEffect(() => { setAuthLoading(false); }, []);\n  const loginWithRedirect = async (mode: "login" | "register" = "login") => {\n    setAuthMode(mode);\n  };\n  const logout = () => { localStorage.removeItem("sentinel_token"); setToken(null); };
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'users' | 'editor'>('editor');
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [copied, setCopied] = useState(false);
@@ -99,7 +98,7 @@ function handleUserLogin(req, res) {
 
   // Real-time Live SSE Stream Sync
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:8000/api/reports/sse/metrics');
+    const eventSource = new EventSource(`${import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api"}/reports/sse/metrics`);
 
     eventSource.onmessage = (event) => {
       try {
@@ -123,7 +122,7 @@ function handleUserLogin(req, res) {
   }, []);
 
   // Run Real / Simulated Audit
-  const handleScanCode = () => {
+  const handleAuthSubmit = async (event: React.FormEvent) => {\n    event.preventDefault();\n    setAuthLoading(true);\n    try {\n      const response = await fetch(`${import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api"}/auth/${authMode}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: authEmail, password: authPassword }) });\n      const data = await response.json();\n      if (!response.ok) throw new Error(data.detail || "Authentication failed");\n      localStorage.setItem("sentinel_token", data.access_token);\n      setToken(data.access_token);\n    } catch (error) {\n      alert(error instanceof Error ? error.message : "Authentication failed");\n    } finally { setAuthLoading(false); }\n  };\n\n  const handleScanCode = () => {
     setIsScanning(true);
     
     setTimeout(() => {
