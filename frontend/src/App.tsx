@@ -143,40 +143,6 @@ function handleUserLogin(req, res) {
     return () => eventSource.close();
   }, []);
 
-  // Run Real / Simulated Audit
-  const handleAuthSubmit = async (event: React.FormEvent) => {\n    event.preventDefault();\n    setAuthLoading(true);\n    try {\n      const response = await fetch(`${import.meta.env.VITE_API_BASE ?? "http://localhost:8000/api"}/auth/${authMode}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: authEmail, password: authPassword }) });\n      const data = await response.json();\n      if (!response.ok) throw new Error(data.detail || "Authentication failed");\n      localStorage.setItem("sentinel_token", data.access_token);\n      setToken(data.access_token);\n    } catch (error) {\n      alert(error instanceof Error ? error.message : "Authentication failed");\n    } finally { setAuthLoading(false); }\n  };\n\n  const handleScanCode = () => {
-    setIsScanning(true);
-    
-    setTimeout(() => {
-      setVulnerabilities([
-        {
-          id: 'VULN-01',
-          type: 'SQL Injection (CWE-89)',
-          severity: 'High',
-          line: 8,
-          description: 'Unsanitized user input string formatted directly into raw SQL query string.',
-          recommendation: 'Use parameterized queries or prepared statements to sanitize inputs.',
-          vulnerableCode: `let query = "SELECT * FROM users WHERE user = '" + username + "' AND pass = '" + password + "'";`,
-          fixedCode: `let query = "SELECT * FROM users WHERE user = ? AND pass = ?";\ndb.query(query, [username, password], callback);`
-        },
-        {
-          id: 'VULN-02',
-          type: 'Hardcoded Credential (CWE-798)',
-          severity: 'High',
-          line: 6,
-          tool: 'Bandit',
-          description: 'Hardcoded sensitive credential / secret token discovered inside source code.',
-          recommendation: 'Store sensitive secrets in environment variables (.env).',
-          vulnerableCode: `const SECRET_KEY = "123456789_super_secret";`,
-          fixedCode: `const SECRET_KEY = process.env.SECRET_KEY;`
-        }
-      ] as any);
-
-      setMetrics(prev => ({ ...prev, threatsBlocked: prev.threatsBlocked + 1 }));
-      setIsScanning(false);
-    }, 1200);
-  };
-
   // Auto Fix Click Functionality
   const applyFix = (vuln: Vulnerability) => {
     setCode(prev => prev.replace(vuln.vulnerableCode, vuln.fixedCode));
