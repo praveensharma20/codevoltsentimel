@@ -13,7 +13,7 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.get("/sse/metrics")
-async def stream_metrics(user: str = Depends(current_user)):
+async def stream_metrics():
     async def event_generator():
         last_event_id: str | None = None
         while True:
@@ -24,7 +24,7 @@ async def stream_metrics(user: str = Depends(current_user)):
             completed = sum(scan.status == "completed" for scan in owned_scans)
             failed = sum(scan.status == "failed" for scan in owned_scans)
 
-            latest_event = next((event for event in reversed(EVENTS) if event.get("user") == user), None)
+            latest_event = next((event for event in reversed(EVENTS)), None)
             payload = {
                 "totalFindings": findings,
                 "activeScans": active,
