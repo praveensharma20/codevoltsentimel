@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { scanCode } from './api/client';
+import ScanSources from './components/ScanSources';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { 
   ShieldAlert, 
@@ -358,6 +359,20 @@ function handleUserLogin(req, res) {
               <p className="text-[10px] text-gray-400 mt-1">Host CPU is not measured by this dashboard</p>
             </div>
           </div>
+
+          <ScanSources
+            token={token!}
+            onResult={(result) => setVulnerabilities(result.findings.map((finding) => ({
+              id: finding.id,
+              type: finding.category,
+              severity: finding.severity === "critical" || finding.severity === "high" ? "High" : finding.severity === "medium" ? "Medium" : "Low",
+              line: finding.line_number,
+              description: finding.explanation,
+              recommendation: finding.fix_recommendation,
+              vulnerableCode: finding.code ?? "",
+              fixedCode: "",
+            })))}
+          />
 
           {/* VIEW 1: CODE EDITOR & REVIEW (DEFAULT ACTIVE) */}
           {activeTab === 'editor' && (
