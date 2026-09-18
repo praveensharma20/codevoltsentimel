@@ -16,7 +16,7 @@ router = APIRouter(prefix="/scans", tags=["scans"], dependencies=[Depends(curren
 service = ScanService()
 
 
-def _record_event(scan: ScanResult, user: str) -> None:
+def _record_event(scan: ScanResult) -> None:
     EVENTS.append({
         "id": f"SCAN-{scan.scan_id[:8]}",
         "time": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
@@ -33,7 +33,7 @@ async def upload_scan(file: UploadFile = File(...), user: str = Depends(current_
     try:
         result = await run_in_threadpool(service.run_scan, source, file.filename or "upload")
         SCAN_OWNERS[result.scan_id] = user
-        _record_event(result, user)
+        _record_event(result)
         return result
     finally:
         shutil.rmtree(source.parent, ignore_errors=True)
