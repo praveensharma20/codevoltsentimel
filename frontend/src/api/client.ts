@@ -40,3 +40,12 @@ export async function scanCode(token: string, code: string, filename = "snippet.
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<ScanResult>;
 }
+
+
+export async function listScans(token: string): Promise<ScanResult[]> {
+  const response = await fetch(`${API_BASE}/scans`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json() as Promise<ScanResult[]>;
+}
