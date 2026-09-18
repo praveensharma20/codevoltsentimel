@@ -301,11 +301,7 @@ function handleUserLogin(req, res) {
             </div>
           </div>
           <button
-            onClick={() =>
-              logout({
-                logoutParams: { returnTo: window.location.origin },
-              })
-            }
+            onClick={logout}
             className="text-gray-400 hover:text-red-400 transition">
             <LogOut className="w-4 h-4" />
           </button>
@@ -339,27 +335,27 @@ function handleUserLogin(req, res) {
           {/* REALTIME METRIC CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200 shadow-sm'}`}>
-              <span className="text-xs text-gray-400 font-medium">Threats Blocked</span>
+              <span className="text-xs text-gray-400 font-medium">Total Findings</span>
               <h3 className="text-2xl font-black text-cyan-400 mt-1">{metrics.threatsBlocked}</h3>
-              <p className="text-[10px] text-emerald-400 mt-1 font-semibold">↑ Real-time SSE Sync</p>
+              <p className="text-[10px] text-emerald-400 mt-1 font-semibold">Live aggregate count</p>
             </div>
 
             <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200 shadow-sm'}`}>
               <span className="text-xs text-gray-400 font-medium">Active Concurrent Scans</span>
               <h3 className="text-2xl font-black text-indigo-400 mt-1">{metrics.activeScans}</h3>
-              <p className="text-[10px] text-gray-400 mt-1">Semgrep + Bandit Workers</p>
+              <p className="text-[10px] text-gray-400 mt-1">Queued + running scans</p>
             </div>
 
             <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200 shadow-sm'}`}>
               <span className="text-xs text-gray-400 font-medium">SAST Pipeline Health</span>
               <h3 className="text-2xl font-black text-emerald-400 mt-1">{metrics.sastHealth}</h3>
-              <p className="text-[10px] text-emerald-500 mt-1 font-semibold">FastAPI Engine 100%</p>
+              <p className="text-[10px] text-emerald-500 mt-1 font-semibold">Backend scanner status</p>
             </div>
 
             <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#0e1422] border-gray-800' : 'bg-white border-gray-200 shadow-sm'}`}>
-              <span className="text-xs text-gray-400 font-medium">CPU Workload</span>
+              <span className="text-xs text-gray-400 font-medium">Runtime Load</span>
               <h3 className="text-2xl font-black text-amber-400 mt-1">{metrics.systemLoad}</h3>
-              <p className="text-[10px] text-gray-400 mt-1">Docker Instance Load</p>
+              <p className="text-[10px] text-gray-400 mt-1">Host CPU is not measured by this dashboard</p>
             </div>
           </div>
 
