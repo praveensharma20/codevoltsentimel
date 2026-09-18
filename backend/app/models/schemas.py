@@ -22,6 +22,11 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class CodeScanRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=200_000)
+    filename: str = Field(default="snippet.txt", max_length=255, pattern=r"^[A-Za-z0-9_.-]+$")
+
+
 class GitHubScanRequest(BaseModel):
     repository_url: HttpUrl
     branch: str | None = Field(default=None, max_length=128, pattern=r"^[A-Za-z0-9._/-]+$")
