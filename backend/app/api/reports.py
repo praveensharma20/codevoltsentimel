@@ -14,15 +14,21 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 @router.get("/sse/metrics")
 async def stream_metrics():
+    """
+    Public SSE endpoint for browser EventSource compatibility.
+
+    EventSource cannot send an Authorization header, so this stream exposes
+    aggregate in-process metrics rather than user-specific scan data.
+    """
     async def event_generator():
         last_event_id: str | None = None
+
         while True:
-            owned_scan_ids = [scan_id for scan_id, owner in SCAN_OWNERS.items() if owner == user]
-            owned_scans = [SCANS[scan_id] for scan_id in owned_scan_ids if scan_id in SCANS]
-            findings = sum(len(scan.findings) for scan in owned_scans)
-            active = sum(scan.status in {"queued", "running"} for scan in owned_scans)
-            completed = sum(scan.status == "completed" for scan in owned_scans)
-            failed = sum(scan.status == "failed" for scan in owned_scans)
+            scans = list(SCANS.values())
+            findings = sum(len(scan.findings) for scan in scans)
+            active = sum(scan.status in {"queued", "running"} for scan in scans)
+            completed = sum(scan.status == "completed" for scan in scans)
+            failed = sum(scan.status == "failed" for scan in scans)
 
             latest_event = next((event for event in reversed(EVENTS)), None)
             payload = {
@@ -31,6 +37,7 @@ async def stream_metrics():
                 "completedScans": completed,
                 "failedScans": failed,
             }
+
             if latest_event and latest_event.get("id") != last_event_id:
                 payload["log"] = latest_event
                 last_event_id = str(latest_event.get("id"))
@@ -58,7 +65,17 @@ def export_report(scan_id: str, format: str = "json", user: str = Depends(curren
         output = io.StringIO()
         writer = csv.DictWriter(
             output,
-            fieldnames=["id", "tool", "category", "file_path", "line_number", "severity", "confidence", "explanation", "fix_recommendation"],
+            fieldnames=[
+                "id",
+                "tool",
+                "category",
+                "file_path",
+                "line_number",
+                "severity",
+                "confidence",
+                "explanation",
+                "fix_recommendation",
+            ],
         )
         writer.writeheader()
         for finding in result.findings:
