@@ -34,7 +34,10 @@ class ScanService:
         if not shutil.which("semgrep"):
             return []
         settings = get_settings()
-        command = ["semgrep", "--json", "--config", settings.semgrep_config, str(source_path)]
+        command = ["semgrep", "--json"]
+        for config in (item.strip() for item in settings.semgrep_config.split(",") if item.strip()):
+            command.extend(["--config", config])
+        command.append(str(source_path))
         completed = subprocess.run(command, capture_output=True, text=True, timeout=settings.scanner_timeout_seconds, check=False)
         try:
             data = json.loads(completed.stdout or "{}")
