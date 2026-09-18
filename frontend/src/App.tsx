@@ -222,11 +222,7 @@ function handleUserLogin(req, res) {
             Login
           </button>
           <button
-            onClick={() =>
-              loginWithRedirect({
-                authorizationParams: { screen_hint: "signup" },
-              })
-            }
+            onClick={() => loginWithRedirect("register")}
             className="bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold"
           >
             Sign Up
