@@ -131,9 +131,9 @@ function handleUserLogin(req, res) {
         const data = JSON.parse(event.data);
         setMetrics(prev => ({
           ...prev,
-          threatsBlocked: data.threatsBlocked,
-          activeScans: data.activeScans,
-          systemLoad: data.systemLoad
+          threatsBlocked: data.totalFindings ?? 0,
+          activeScans: data.activeScans ?? 0,
+          systemLoad: 'N/A'
         }));
 
         if (data.log) {
