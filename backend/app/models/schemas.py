@@ -24,7 +24,7 @@ class Token(BaseModel):
 
 class GitHubScanRequest(BaseModel):
     repository_url: HttpUrl
-    branch: str | None = Field(default=None, max_length=128)
+    branch: str | None = Field(default=None, max_length=128, pattern=r"^[A-Za-z0-9._/-]+$")
 
 
 class Finding(BaseModel):
@@ -44,6 +44,6 @@ class ScanResult(BaseModel):
     scan_id: str
     status: Literal["queued", "running", "completed", "failed"]
     source: str
-    findings: list[Finding] = []
-    summary: dict[str, int] = {}
+    findings: list[Finding] = Field(default_factory=list)
+    summary: dict[str, int] = Field(default_factory=dict)
     error: str | None = None
